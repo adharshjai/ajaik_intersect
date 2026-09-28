@@ -1,0 +1,22 @@
+{
+  "pca_lda": {
+    "accuracy": 0.9765625,
+    "macro_f1": 0.9673321234119783
+  },
+  "svm_rbf": {
+    "accuracy": 1.0,
+    "macro_f1": 1.0
+  },
+  "spectrum_only": {
+    "accuracy": 0.8828125,
+    "macro_f1": 0.8599665172829434
+  },
+  "scalogram_only": {
+    "accuracy": 0.8984375,
+    "macro_f1": 0.8902715783349086
+  },
+  "hybrid": {
+    "accuracy": 0.84375,
+    "macro_f1": 0.8274133596562563
+  }
+}

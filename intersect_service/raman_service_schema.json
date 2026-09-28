@@ -1,0 +1,438 @@
+{
+  "asyncapi": "2.6.0",
+  "x-intersect-version": "0.9.6",
+  "info": {
+    "title": "ajaik.lab.raman.analysis.substance-classifier",
+    "description": "INTERSECT schema",
+    "version": "0.0.0"
+  },
+  "defaultContentType": "application/json",
+  "capabilities": {
+    "intersect_sdk": {
+      "endpoints": {},
+      "events": {},
+      "status": {
+        "$ref": "#/components/schemas/IntersectCoreStatus"
+      },
+      "description": "Core capability present in every INTERSECT Service.\n\nThis may be called explicitly by any Client interacting with any SDK service. Set the operation to be \"intersect_sdk.<ENDPOINT>\"."
+    },
+    "RamanClassifier": {
+      "endpoints": {
+        "classify_spectrum": {
+          "publish": {
+            "message": {
+              "schemaFormat": "application/vnd.aai.asyncapi+json;version=2.6.0",
+              "contentType": "application/json",
+              "traits": {
+                "$ref": "#/components/messageTraits/commonHeaders"
+              },
+              "payload": {
+                "$ref": "#/components/schemas/SubstanceClassification"
+              }
+            },
+            "description": "Identify the substance from one raw Raman spectrum."
+          },
+          "subscribe": {
+            "message": {
+              "schemaFormat": "application/vnd.aai.asyncapi+json;version=2.6.0",
+              "contentType": "application/json",
+              "traits": {
+                "$ref": "#/components/messageTraits/commonHeaders"
+              },
+              "payload": {
+                "$ref": "#/components/schemas/RamanSpectrum"
+              }
+            },
+            "description": "Identify the substance from one raw Raman spectrum."
+          }
+        },
+        "get_model_info": {
+          "publish": {
+            "message": {
+              "schemaFormat": "application/vnd.aai.asyncapi+json;version=2.6.0",
+              "contentType": "application/json",
+              "traits": {
+                "$ref": "#/components/messageTraits/commonHeaders"
+              },
+              "payload": {
+                "$ref": "#/components/schemas/ModelInfo"
+              }
+            },
+            "description": "What the model can identify and what spectra it accepts."
+          },
+          "subscribe": {
+            "message": {
+              "schemaFormat": "application/vnd.aai.asyncapi+json;version=2.6.0",
+              "contentType": "application/json",
+              "traits": {
+                "$ref": "#/components/messageTraits/commonHeaders"
+              }
+            },
+            "description": "What the model can identify and what spectra it accepts."
+          }
+        }
+      },
+      "events": {
+        "substance_identified": {
+          "schemaFormat": "application/vnd.aai.asyncapi+json;version=2.6.0",
+          "contentType": "application/json",
+          "payload": {
+            "$ref": "#/components/schemas/SubstanceClassification"
+          },
+          "traits": {
+            "$ref": "#/components/messageTraits/commonHeaders"
+          }
+        }
+      },
+      "status": {
+        "$ref": "#/components/schemas/ClassifierStatus"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "IntersectCoreStatus": {
+        "description": "Core status information about the INTERSECT-SDK Service as a whole.",
+        "properties": {
+          "uptime": {
+            "format": "duration",
+            "title": "Uptime",
+            "type": "string"
+          },
+          "logical_cpus": {
+            "title": "Logical CPUs",
+            "type": "integer"
+          },
+          "physical_cpus": {
+            "title": "Physical CPUs",
+            "type": "integer"
+          },
+          "cpu_percentages": {
+            "items": {
+              "type": "number"
+            },
+            "title": "CPU Percentages",
+            "type": "array"
+          },
+          "service_cpu_percentage": {
+            "title": "Service CPU Usage Percentage",
+            "type": "number"
+          },
+          "memory_total": {
+            "title": "Memory Total",
+            "type": "integer"
+          },
+          "memory_usage_percentage": {
+            "title": "Memory Usage Percentage",
+            "type": "number"
+          },
+          "service_memory_percentage": {
+            "title": "Service Memory Usage Percentage",
+            "type": "number"
+          },
+          "disk_total": {
+            "title": "Disk Total",
+            "type": "integer"
+          },
+          "disk_usage_percentage": {
+            "title": "Disk Usage Percentage",
+            "type": "number"
+          }
+        },
+        "required": [
+          "uptime",
+          "logical_cpus",
+          "physical_cpus",
+          "cpu_percentages",
+          "service_cpu_percentage",
+          "memory_total",
+          "memory_usage_percentage",
+          "service_memory_percentage",
+          "disk_total",
+          "disk_usage_percentage"
+        ],
+        "title": "IntersectCoreStatus",
+        "type": "object"
+      },
+      "RamanSpectrum": {
+        "description": "One raw spectrum, exactly as exported by the spectrometer software.",
+        "properties": {
+          "raman_shift": {
+            "description": "Raman shift axis in cm^-1",
+            "items": {
+              "type": "number"
+            },
+            "title": "Raman Shift",
+            "type": "array"
+          },
+          "intensity": {
+            "description": "Intensity (counts), same length as raman_shift",
+            "items": {
+              "type": "number"
+            },
+            "title": "Intensity",
+            "type": "array"
+          },
+          "spectrum_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Caller-chosen ID, echoed back",
+            "title": "Spectrum Id"
+          }
+        },
+        "required": [
+          "raman_shift",
+          "intensity"
+        ],
+        "title": "RamanSpectrum",
+        "type": "object"
+      },
+      "SubstanceClassification": {
+        "properties": {
+          "spectrum_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spectrum Id"
+          },
+          "substance": {
+            "title": "Substance",
+            "type": "string"
+          },
+          "confidence": {
+            "description": "Softmax probability of the predicted substance",
+            "title": "Confidence",
+            "type": "number"
+          },
+          "probabilities": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Probabilities",
+            "type": "object"
+          },
+          "inference_ms": {
+            "title": "Inference Ms",
+            "type": "number"
+          }
+        },
+        "required": [
+          "spectrum_id",
+          "substance",
+          "confidence",
+          "probabilities",
+          "inference_ms"
+        ],
+        "title": "SubstanceClassification",
+        "type": "object"
+      },
+      "ModelInfo": {
+        "properties": {
+          "substances": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Substances",
+            "type": "array"
+          },
+          "shift_range_cm": {
+            "description": "Spectra must cover at least this range",
+            "items": {
+              "type": "number"
+            },
+            "title": "Shift Range Cm",
+            "type": "array"
+          },
+          "n_points": {
+            "title": "N Points",
+            "type": "integer"
+          },
+          "wavelet": {
+            "title": "Wavelet",
+            "type": "string"
+          },
+          "n_scales": {
+            "title": "N Scales",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "substances",
+          "shift_range_cm",
+          "n_points",
+          "wavelet",
+          "n_scales"
+        ],
+        "title": "ModelInfo",
+        "type": "object"
+      },
+      "ClassifierStatus": {
+        "properties": {
+          "model_loaded": {
+            "title": "Model Loaded",
+            "type": "boolean"
+          },
+          "spectra_classified": {
+            "title": "Spectra Classified",
+            "type": "integer"
+          },
+          "last_result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SubstanceClassification"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "model_loaded",
+          "spectra_classified",
+          "last_result"
+        ],
+        "title": "ClassifierStatus",
+        "type": "object"
+      }
+    },
+    "messageTraits": {
+      "commonHeaders": {
+        "userspaceHeaders": {
+          "description": "ALL request/response/command messages must contain this header.\n\nWe do not include the content type of the message in the header, it is handled separately.",
+          "properties": {
+            "message_id": {
+              "description": "Unique message ID",
+              "title": "Message Id",
+              "type": "string"
+            },
+            "campaign_id": {
+              "description": "ID associated with a campaign",
+              "title": "Campaign Id",
+              "type": "string"
+            },
+            "request_id": {
+              "description": "ID associated with a specific request message and response message sequence",
+              "title": "Request Id",
+              "type": "string"
+            },
+            "source": {
+              "description": "source of the message",
+              "pattern": "^[a-z0-9][-a-z0-9.]*[-a-z0-9]$",
+              "title": "Source",
+              "type": "string"
+            },
+            "destination": {
+              "description": "destination of the message",
+              "pattern": "^[a-z0-9][-a-z0-9.]*[-a-z0-9]$",
+              "title": "Destination",
+              "type": "string"
+            },
+            "created_at": {
+              "description": "the UTC timestamp of message creation",
+              "title": "Created At",
+              "type": "string"
+            },
+            "sdk_version": {
+              "description": "SemVer string of SDK's version, used to check for compatibility",
+              "pattern": "^\\d+\\.\\d+\\.\\d+$",
+              "title": "Sdk Version",
+              "type": "string"
+            },
+            "operation_id": {
+              "description": "Name of capability and operation we want to call, in the format ${CAPABILITY_NAME}.${FUNCTION_NAME}",
+              "title": "Operation Id",
+              "type": "string"
+            },
+            "data_handler": {
+              "description": "Code signifying where data is stored.",
+              "type": "string"
+            },
+            "has_error": {
+              "description": "If this value is True, the payload will contain the error message (a string)",
+              "title": "Has Error",
+              "type": "string"
+            }
+          },
+          "required": [
+            "message_id",
+            "campaign_id",
+            "request_id",
+            "source",
+            "destination",
+            "created_at",
+            "sdk_version",
+            "operation_id"
+          ],
+          "title": "UserspaceMessageHeaders",
+          "type": "object"
+        },
+        "eventHeaders": {
+          "description": "ALL event messages must include this header.\n\nWe do not include the content type of the message in the header, it is handled separately.",
+          "properties": {
+            "message_id": {
+              "description": "Unique message ID",
+              "title": "Message Id",
+              "type": "string"
+            },
+            "source": {
+              "description": "source of the message",
+              "pattern": "^[a-z0-9][-a-z0-9.]*[-a-z0-9]$",
+              "title": "Source",
+              "type": "string"
+            },
+            "created_at": {
+              "description": "the UTC timestamp of message creation",
+              "title": "Created At",
+              "type": "string"
+            },
+            "sdk_version": {
+              "description": "SemVer string of SDK's version, used to check for compatibility",
+              "pattern": "^\\d+\\.\\d+\\.\\d+$",
+              "title": "Sdk Version",
+              "type": "string"
+            },
+            "data_handler": {
+              "description": "Code signifying where data is stored.",
+              "type": "string"
+            },
+            "capability_name": {
+              "description": "The name of the capability which emitted the event originally.",
+              "pattern": "^[a-zA-Z0-9]\\w*$",
+              "title": "Capability Name",
+              "type": "string"
+            },
+            "event_name": {
+              "description": "The name of the event that was emitted, namespaced to the capability.",
+              "pattern": "^[a-zA-Z0-9]\\w*$",
+              "title": "Event Name",
+              "type": "string"
+            }
+          },
+          "required": [
+            "message_id",
+            "source",
+            "created_at",
+            "sdk_version",
+            "capability_name",
+            "event_name"
+          ],
+          "title": "EventMessageHeaders",
+          "type": "object"
+        }
+      }
+    }
+  }
+}

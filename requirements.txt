@@ -1,0 +1,9 @@
+numpy
+scipy
+pandas
+PyWavelets
+scikit-learn
+matplotlib
+tqdm
+tensorflow>=2.16
+intersect-sdk==0.9.3

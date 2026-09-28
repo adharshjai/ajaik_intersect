@@ -1,0 +1,14 @@
+# Message broker for local testing (same image and credentials as the INTERSECT-SDK examples).
+# Start: docker compose -f intersect_service/docker-compose.yml up -d
+services:
+  broker:
+    image: "bitnamilegacy/rabbitmq:4.1"
+    ports:
+      - "1883:1883"   # MQTT
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Web UI (http://localhost:15672)
+    environment:
+      RABBITMQ_PLUGINS: "rabbitmq_management rabbitmq_mqtt"
+      RABBITMQ_USERNAME: "intersect_username"
+      RABBITMQ_PASSWORD: "intersect_password"
+      RABBITMQ_MANAGEMENT_ALLOW_WEB_ACCESS: "yes"

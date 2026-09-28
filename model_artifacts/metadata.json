@@ -1,0 +1,24 @@
+{
+  "preprocess": {
+    "shift_min": 200.0,
+    "shift_max": 1800.0,
+    "n_points": 800,
+    "als_lambda": 100000.0,
+    "als_p": 0.01,
+    "despike_threshold": 6.0,
+    "wavelet": "mexh",
+    "n_scales": 48,
+    "max_scale": 64.0,
+    "scalogram_pool": 4
+  },
+  "class_names": [
+    "acetaminophen",
+    "calcite",
+    "compound_form_I",
+    "compound_form_II",
+    "cyclohexane",
+    "ethanol",
+    "glucose",
+    "polystyrene"
+  ]
+}
