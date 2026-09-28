@@ -3,6 +3,8 @@ Train and compare substance classifiers, then save the hybrid model for the INTE
 
 Compared on the same held-out test set:
   pca_lda, svm_rbf     classic chemometrics on the preprocessed spectrum
+  svm_scalogram        SVM on the flattened CWT scalogram alone
+  hybrid_svm           SVM on spectrum + scalogram together (the classic counterpart of the hybrid)
   spectrum_only        1D CRNN branch alone
   scalogram_only       2D CNN on the CWT scalogram alone
   hybrid               both branches fused (the model that gets deployed)
@@ -29,7 +31,7 @@ from tqdm import tqdm
 
 from raman.bundle import DEFAULT_BUNDLE_DIR, save_bundle
 from raman.data import load_dataset
-from raman.model import build_model, classic_baselines
+from raman.model import build_model, classic_baselines, svm_variants
 from raman.preprocess import PreprocessConfig, augment, preprocess_spectrum, scalogram
 
 
@@ -90,6 +92,12 @@ def main():
     for name, clf in classic_baselines().items():
         clf.fit(X[train], y[train])
         preds[name] = clf.predict(X[test])
+
+    # SVMs that also see the scalogram. X_train starts with the un-augmented X[train],
+    # so the first len(train) scalograms belong to it (classic models train without augmentation).
+    for name, (features, clf) in svm_variants().items():
+        clf.fit(features(X[train], S_train[:len(train)]), y[train])
+        preds[name] = clf.predict(features(X[test], S_test))
 
     deployed = None
     for kind in ('spectrum_only', 'scalogram_only', 'hybrid'):

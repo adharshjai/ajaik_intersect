@@ -1,6 +1,7 @@
 """
 Models: the hybrid CRNN + CNN, its two single-branch ablations, and classic baselines.
 """
+import numpy as np
 import tensorflow as tf
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -62,4 +63,26 @@ def classic_baselines():
     return {
         'pca_lda': make_pipeline(PCA(n_components=20), LinearDiscriminantAnalysis()),
         'svm_rbf': SVC(kernel='rbf', C=10, gamma='scale'),
+    }
+
+
+# --- Hybrid SVM: the same two views as the hybrid network, fed to an SVM ---
+
+def hybrid_svm_features(spectra, scalograms):
+    """Spectrum and flattened scalogram side by side, each block weighted to contribute equally.
+
+    The scalogram has 12x more values than the spectrum (48 x 200 vs 800). Dividing each
+    block by the square root of its size gives both the same total variance, so the RBF
+    kernel's distance isn't dominated by the scalogram just because it is bigger.
+    """
+    spectra = spectra.reshape(len(spectra), -1)
+    scalograms = scalograms.reshape(len(scalograms), -1)
+    return np.hstack([spectra / np.sqrt(spectra.shape[1]), scalograms / np.sqrt(scalograms.shape[1])])
+
+
+def svm_variants():
+    """SVMs on each view and on both. Keyed by name -> (feature builder, model)."""
+    return {
+        'svm_scalogram': (lambda X, S: S.reshape(len(S), -1), SVC(kernel='rbf', C=10, gamma='scale')),
+        'hybrid_svm': (hybrid_svm_features, SVC(kernel='rbf', C=10, gamma='scale')),
     }

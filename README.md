@@ -41,8 +41,9 @@ The scalogram is computed as a numeric array (48 scales × 200 points, Mexican-h
 |---|---|
 | `raman/data.py` | Reads spectrum CSVs; generates the synthetic example dataset |
 | `raman/preprocess.py` | Despiking, ALS baseline removal, SNV, common grid, CWT scalogram, augmentation |
-| `raman/model.py` | Hybrid model, the two single-branch ablations, PCA-LDA and SVM baselines |
-| `raman/train.py` | Trains and compares every model on held-out samples, then saves the hybrid |
+| `raman/model.py` | Hybrid network, the two single-branch ablations, PCA-LDA, SVM and hybrid SVM |
+| `raman/train.py` | Trains and compares every model on held-out samples, then saves the hybrid network |
+| `raman/compare_svms.py` | Noise stress test: SVM on spectrum vs. scalogram vs. both |
 | `raman/bundle.py` | Saves and loads the model together with its preprocessing settings |
 | `intersect_service/raman_service.py` | INTERSECT service, capability `RamanClassifier` |
 | `intersect_service/raman_client.py` | Example client: sends CSV spectra, prints results |
@@ -85,6 +86,8 @@ Test set: 128 spectra from 16 held-out samples.
 |---|---|---|
 | pca_lda | 0.977 | 0.967 |
 | svm_rbf | 1.000 | 1.000 |
+| svm_scalogram | 0.969 | 0.956 |
+| hybrid_svm | 0.992 | 0.989 |
 | spectrum_only | 0.883 | 0.860 |
 | scalogram_only | 0.898 | 0.890 |
 | hybrid | 0.844 | 0.827 |
@@ -96,6 +99,56 @@ What this shows:
 - **Run-to-run variation:** the test set has only 16 samples, so accuracy moves several points between runs.
 
 Always compare against these baselines before claiming the hybrid helps.
+
+## Hybrid SVM
+
+The hybrid SVM is the classic-ML counterpart of the hybrid network. It gets the **same two views**, the preprocessed spectrum and the CWT scalogram, but as one long feature vector fed to an RBF-kernel SVM instead of two neural-network branches.
+
+```
+spectrum (800 values)            ─► ÷ √800  ─┐
+                                              ├─► concatenate (10,400 values) ─► SVM (RBF)
+scalogram (48 × 200 = 9,600 values) ─► ÷ √9600 ─┘
+```
+
+**Block weighting.** The scalogram has 12× more values than the spectrum. Without weighting, it would dominate the SVM's distance measure simply because it is bigger. Dividing each block by the square root of its size gives both blocks equal total weight. See `hybrid_svm_features` in [`raman/model.py`](raman/model.py).
+
+Two SVMs isolate what the scalogram adds:
+
+| Model | Spectrum | Scalogram |
+|---|---|---|
+| `svm_rbf` | ✅ | ❌ |
+| `svm_scalogram` | ❌ | ✅ |
+| `hybrid_svm` | ✅ | ✅ |
+
+All three are trained in `raman/train.py` and appear in the results table above.
+
+### Stress test
+
+On clean held-out data every SVM is near 100%, which says nothing about whether the scalogram helps. `raman/compare_svms.py` runs a harder test:
+- it repeats the sample-grouped split 10 times;
+- it adds extra noise to the **test** spectra only, simulating field measurements noisier than the training data.
+
+It takes about a minute to run:
+
+```bash
+python -m raman.compare_svms
+```
+
+Results (mean ± std over 10 splits; noise is in units of the normalized spectrum):
+
+| Extra test noise | svm_rbf | svm_scalogram | hybrid_svm |
+|---|---|---|---|
+| 0 | 0.988 ± 0.009 | 0.963 ± 0.009 | 0.986 ± 0.012 |
+| 0.5 | 0.986 ± 0.011 | 0.959 ± 0.014 | 0.981 ± 0.017 |
+| 1 | 0.955 ± 0.031 | 0.927 ± 0.031 | 0.950 ± 0.028 |
+| 1.5 | 0.883 ± 0.054 | 0.854 ± 0.027 | 0.888 ± 0.043 |
+
+**What this shows:**
+- **The hybrid SVM matches the plain SVM but doesn't beat it.** Every difference is smaller than the spread between splits.
+- **The scalogram carries real information but less of it.** Alone it scores 2–3 points lower, and adding it to the spectrum neither helps nor hurts.
+- **The single-split 100% was partly luck.** Averaged over 10 splits, the plain SVM scores 98.8%.
+
+On this synthetic data, the CWT view doesn't add information a classic model can use beyond the preprocessed spectrum. The real test is real spectra, where fluorescence, varying peak widths and mixtures are messier than the simulation. Rerun both scripts on real data before deciding which model to deploy.
 
 ## INTERSECT interface
 

@@ -7,6 +7,14 @@
     "accuracy": 1.0,
     "macro_f1": 1.0
   },
+  "svm_scalogram": {
+    "accuracy": 0.96875,
+    "macro_f1": 0.9555555555555555
+  },
+  "hybrid_svm": {
+    "accuracy": 0.9921875,
+    "macro_f1": 0.9886148007590133
+  },
   "spectrum_only": {
     "accuracy": 0.8828125,
     "macro_f1": 0.8599665172829434
