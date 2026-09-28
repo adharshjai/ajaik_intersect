@@ -1,4 +1,4 @@
-# ajaiks_intersect
+# ajaik_intersect
 
 Raman spectroscopy substance classification with a **hybrid deep model** that looks at each spectrum two ways:
 - the **raw spectrum** (intensity vs. Raman shift)
